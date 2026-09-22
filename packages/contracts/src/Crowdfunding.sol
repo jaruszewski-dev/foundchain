@@ -14,6 +14,7 @@ contract Crowdfunding {
     uint256 public campaignCount;
 
     mapping(uint256 => Campaign) public campaigns;
+    mapping(uint256 => mapping(address => uint256)) public contributions;
 
     function createCampaign(uint256 goal, uint256 deadline) external {
 
@@ -30,4 +31,18 @@ contract Crowdfunding {
             claimed: false
         });
     }
+
+    function contribute(uint256 campaignId) external payable {
+
+        require(campaigns[campaignId].owner != address(0), "This campaign doesn't exist");
+        require(campaigns[campaignId].deadline > block.timestamp, "This campaign already finished");
+        require(msg.value > 0, "Amount has to be grater than 0");
+
+        uint256 remainingGoal = campaigns[campaignId].goal - campaigns[campaignId].raised;
+
+        require(msg.value <= remainingGoal, "Amount has to be lower or equal than remaining goal");
+
+        campaigns[campaignId].raised += msg.value;
+        contributions[campaignId][msg.sender] += msg.value;
+    } 
 }
