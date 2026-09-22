@@ -36,3 +36,12 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Foundry
+/packages/contracts/cache/
+/packages/contracts/out/
+/packages/contracts/broadcast/
+
+# Local environment and secrets
+/packages/contracts/.env
+/packages/contracts/.env.*
