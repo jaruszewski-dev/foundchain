@@ -10,6 +10,7 @@ contract CrowdfundingTest is Test {
 
     function setUp() public {
         crowdfunding = new Crowdfunding();
+        vm.deal(address(this), 10 ether);
     }
 
 
@@ -42,5 +43,62 @@ contract CrowdfundingTest is Test {
         crowdfunding.createCampaign(1 ether, block.timestamp - 1 days);
 
         assertEq(crowdfunding.campaignCount(), 0);
+    }
+
+    function testContributeToCampaign() public {
+        crowdfunding.createCampaign(5 ether, block.timestamp + 30 days);
+        crowdfunding.contribute{value: 1 ether}(1);
+
+        (,, uint256 raised,,) = crowdfunding.campaigns(1);
+
+        assertEq(raised, 1 ether);
+        assertEq(crowdfunding.contributions(1, address(this)), 1 ether);
+    }
+
+    function testRevertIfCampaignMissing() public {
+        vm.expectRevert("This campaign doesn't exist");
+
+        crowdfunding.contribute{value: 1 ether}(1);
+
+        assertEq(crowdfunding.campaignCount(), 0);
+    }
+
+    function testRevertIfCampaignFinished() public {
+        uint256 deadline = block.timestamp + 1 days;
+
+        crowdfunding.createCampaign(5 ether, deadline);
+        vm.warp(deadline + 1 days);
+
+        vm.expectRevert("This campaign already finished");
+        crowdfunding.contribute{value: 1 ether}(1);
+
+        (,, uint256 raised, uint256 savedDeadline,) = crowdfunding.campaigns(1);
+
+        assertEq(deadline, savedDeadline);
+        assertEq(raised, 0);
+    }
+
+    function testRevertIfZeroContribution() public {
+        crowdfunding.createCampaign(5 ether, block.timestamp + 1 days);
+
+        vm.expectRevert("Amount has to be greater than 0");
+        crowdfunding.contribute{value: 0}(1);
+
+        (,, uint256 raised ,,) = crowdfunding.campaigns(1);
+
+        assertEq(raised, 0);
+        assertEq(crowdfunding.contributions(1, address(this)), 0);
+    }
+
+    function testRevertOnExcessContribution() public {
+        crowdfunding.createCampaign(5 ether, block.timestamp + 1 days);
+
+        vm.expectRevert("Amount has to be lower or equal than remaining goal");
+        crowdfunding.contribute{value: 6 ether}(1);
+
+        (,, uint256 raised ,,) = crowdfunding.campaigns(1);
+
+        assertEq(raised, 0);
+        assertEq(crowdfunding.contributions(1, address(this)), 0);
     }
 }
