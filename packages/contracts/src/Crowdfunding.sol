@@ -36,7 +36,7 @@ contract Crowdfunding {
 
         require(campaigns[campaignId].owner != address(0), "This campaign doesn't exist");
         require(campaigns[campaignId].deadline > block.timestamp, "This campaign already finished");
-        require(msg.value > 0, "Amount has to be grater than 0");
+        require(msg.value > 0, "Amount has to be greater than 0");
 
         uint256 remainingGoal = campaigns[campaignId].goal - campaigns[campaignId].raised;
 
